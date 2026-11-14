@@ -5,6 +5,9 @@ import Pool from "../../assets/pool.jpg";
 import Team from "../../assets/team.jpeg";
 import type { Card } from "../../types";
 
+const academyName =
+  "Arab Academy for Science, Technology & Maritime Transport (AASTMT)";
+
 export const cards: Card[] = [
   {
     title: "Who We Are",
@@ -37,7 +40,16 @@ export const cards: Card[] = [
           style={`--card-z: ${cards.length - index};`}
         >
           <h2 class="about-card-title">{card.title}</h2>
-          <p class="about-card-body">{card.body}</p>
+          <p class="about-card-body">
+            {card.body.split(academyName).map((part, partIndex, parts) => (
+              <>
+                {part}
+                {partIndex < parts.length - 1 && (
+                  <a href="https://aast.edu">{academyName}</a>
+                )}
+              </>
+            ))}
+          </p>
           <Image
             class="about-card-img"
             src={card.image}
@@ -65,6 +77,28 @@ export const cards: Card[] = [
     document.addEventListener("astro:page-load", () => {
       const section = document.querySelector<HTMLElement>(".about-section");
       if (!section) return;
+
+      const academyLink =
+        section.querySelector<HTMLAnchorElement>(".about-card-body a");
+      section.addEventListener("copy", (event) => {
+        const selection = window.getSelection();
+        if (!academyLink || !selection || selection.isCollapsed) return;
+
+        let selectionIncludesAcademyLink = false;
+        for (let index = 0; index < selection.rangeCount; index++) {
+          if (selection.getRangeAt(index).intersectsNode(academyLink)) {
+            selectionIncludesAcademyLink = true;
+            break;
+          }
+        }
+        if (!selectionIncludesAcademyLink) return;
+
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return;
+
+        event.preventDefault();
+        clipboardData.setData("text/plain", selection.toString());
+      });
 
       const cardElements = section.querySelectorAll("[data-card]");
       const nextButton = section.querySelector<HTMLButtonElement>(
@@ -216,6 +250,12 @@ export const cards: Card[] = [
     font-size: clamp(13px, 1.4vw, 20px);
     font-weight: 400;
     line-height: 1.7;
+  }
+
+  .about-card-body a {
+    color: var(--blue);
+    cursor: pointer;
+    pointer-events: auto;
   }
 
   .about-card-img {
